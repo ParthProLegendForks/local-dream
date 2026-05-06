@@ -38,7 +38,7 @@ If you like it, please consider [sponsor](https://github.com/xororz/local-dream?
 - **custom models** - Import your own SD1.5 models for CPU (in app), SD1.5 and SDXL for NPU (follow [conversion guide](https://github.com/xororz/local-dream/tree/master/convert)). You can get some pre-converted models from [xororz/sd-qnn](https://huggingface.co/xororz/sd-qnn/tree/main) or [xororz/sdxl-qnn](https://huggingface.co/xororz/sdxl-qnn/tree/main) or [Mr-J-369](https://huggingface.co/Mr-J-369)
 - **lora support** - Support adding LoRA weights to custom CPU models when importing.
 - **prompt weights** - Emphasize certain words in prompts. E.g., `(masterpiece:1.5)`. Same format as [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
-- **embeddings** - Support for custom embeddings like [EasyNegative](https://civitai.com/models/7808/easynegative). SafeTensor format is required. Convert `pt` to `safetensors` using [this](https://chino.icu/local-dream/pt2sf.py)
+- **embeddings** - Support for custom embeddings like [EasyNegative](https://civitai.com/models/7808/easynegative). SafeTensor format is required. Please convert `pt` to `safetensors` first.
 - **upscalers** - 4x upscaling with [realesrgan_x4plus_anime_6b](https://github.com/xinntao/Real-ESRGAN/) and [4x-UltraSharpV2_Lite](https://huggingface.co/Kim2091/UltraSharpV2)
 
 ## 🔧 Build Instructions
@@ -66,7 +66,7 @@ git clone --recursive https://github.com/xororz/local-dream.git
 
 ### 2. Prepare SDKs
 
-1. **Download QNN SDK**: Get [QNN_SDK_2.39](https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/sdks/Qualcomm_AI_Runtime_Community/All/2.39.0.250926/v2.39.0.250926.zip) and extract
+1. **Download QNN SDK**: Get QNN SDK 2.39 from the [Qualcomm AI Engine Direct SDK page](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk) and extract
 2. **Download Android NDK**: Get [Android NDK](https://developer.android.com/ndk/downloads) and extract
 3. **Configure paths**:
    - Update `QNN_SDK_ROOT` in `app/src/main/cpp/CMakeLists.txt`

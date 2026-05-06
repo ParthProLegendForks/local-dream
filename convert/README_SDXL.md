@@ -6,11 +6,11 @@ This guide outlines an experimental host-side workflow for converting **Stable D
 
 Please use **Linux** or **WSL** for the conversion process.
 
-Download the conversion scripts [convertsdxl.zip](https://chino.icu/local-dream/convertsdxl.zip)
+The conversion scripts will be made available shortly. Please check back later or watch this repo's Releases page for updates.
 
 ## Prerequisites
 
-- [QNN_SDK_2.28](https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/qualcomm_neural_processing_sdk/v2.28.0.241029.zip) - **Please use v2.28 to avoid potential issues**
+- QNN SDK 2.28 - Get from the [Qualcomm AI Engine Direct SDK page](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk). **Please use v2.28 to avoid potential issues.**
 - [uv](https://github.com/astral-sh/uv) - Python environment manager
 - Enough RAM+swap(~64GB) for large-resolution conversion
 
@@ -21,7 +21,7 @@ If you have a CUDA-enabled device, you can switch the torch dependency in pyproj
 
 ## Environment Setup
 
-1. CD to the convertsdxl directory and run:
+1. CD to the convert directory and run:
    ```bash
    uv venv -p 3.10.17
    source .venv/bin/activate

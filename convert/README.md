@@ -10,11 +10,11 @@ Since I have implemented on-device CPU model conversion. We focus on NPU convers
 
 Please use **Linux** or WSL environment for the conversion process.
 
-Download the conversion scripts [npuconvertv2.zip](https://chino.icu/local-dream/npuconvertv2.zip)
+The conversion scripts will be made available shortly. Please check back later or watch this repo's Releases page for updates.
 
 ## Prerequisites
 
-- [QNN_SDK_2.28](https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/qualcomm_neural_processing_sdk/v2.28.0.241029.zip) - Please use v2.28 to avoid potential issues
+- QNN SDK 2.28 - Get from the [Qualcomm AI Engine Direct SDK page](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk). Please use v2.28 to avoid potential issues.
 - [uv](https://github.com/astral-sh/uv) - Python environment manager
 - [zstd](https://github.com/facebook/zstd) - Install via your package manager (e.g., `sudo apt-get install zstd`)
 
@@ -22,7 +22,7 @@ If you have a CUDA-enabled device, you can switch the torch dependency in pyproj
 
 ## Environment Setup
 
-1. CD to the npuconvert directory and run:
+1. CD to the convert directory and run:
    ```bash
    uv venv -p 3.10.17
    source .venv/bin/activate
