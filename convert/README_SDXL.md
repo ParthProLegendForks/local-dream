@@ -12,14 +12,16 @@ Download the conversion scripts [convertsdxl.zip](https://chino.icu/local-dream/
 
 - [QNN_SDK_2.28](https://apigwx-aws.qualcomm.com/qsc/public/v1/api/download/software/qualcomm_neural_processing_sdk/v2.28.0.241029.zip) - **Please use v2.28 to avoid potential issues**
 - [uv](https://github.com/astral-sh/uv) - Python environment manager
-- Enough RAM+swap(~128GB) for large-resolution conversion
+- Enough RAM+swap(~64GB) for large-resolution conversion
+
+If you have a CUDA-enabled device, you can switch the torch dependency in pyproject.toml to the GPU version to speed up the data preparation phase.
 
 > [!IMPORTANT]
 > SDXL conversion is substantially heavier than SD1.5 conversion. High-resolution workflows may require significantly more memory, much more disk space, and much longer context generation times.
 
 ## Environment Setup
 
-1. CD to the npuconvert directory and run:
+1. CD to the convertsdxl directory and run:
    ```bash
    uv venv -p 3.10.17
    source .venv/bin/activate

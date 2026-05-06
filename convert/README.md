@@ -18,6 +18,8 @@ Download the conversion scripts [npuconvertv2.zip](https://chino.icu/local-dream
 - [uv](https://github.com/astral-sh/uv) - Python environment manager
 - [zstd](https://github.com/facebook/zstd) - Install via your package manager (e.g., `sudo apt-get install zstd`)
 
+If you have a CUDA-enabled device, you can switch the torch dependency in pyproject.toml to the GPU version to speed up the data preparation phase.
+
 ## Environment Setup
 
 1. CD to the npuconvert directory and run:
