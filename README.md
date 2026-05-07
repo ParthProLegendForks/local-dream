@@ -20,26 +20,25 @@ If you like it, please consider [sponsor](https://github.com/xororz/local-dream?
 >
 > Most users don't get how to properly use highres mode for SD1.5. Please check [here](#npu-high-resolution-support).
 >
-> Now you can import your own NPU models converted using our easy-to-follow [NPU Model Conversion Guide](https://github.com/xororz/local-dream/tree/master/convert). And you can also download some pre-converted models from [xororz/sd-qnn](https://huggingface.co/xororz/sd-qnn/tree/main) or [xororz/sdxl-qnn](https://huggingface.co/xororz/sdxl-qnn/tree/main) or [Mr-J-369](https://huggingface.co/Mr-J-369). For SD1.5 models, download `_min` if you are using non-flagship chips. Download `_8gen1` if you are using 8gen1. Download `_8gen2` if you are using 8gen2/3/4/5. We recommend checking the instructions on the original model page to set up prompts and parameters.
+> Now you can import your own NPU models converted using our easy-to-follow [NPU Model Conversion Guide](./convert). For SD1.5 models, choose `_min` if you are using non-flagship chips, `_8gen1` for 8gen1, or `_8gen2` for 8gen2/3/4/5. We recommend checking the instructions on the original model page to set up prompts and parameters.
 >
 > You can join our [telegram group](https://t.me/local_dream) for discussion or help with testing.
 
 ## 🚀 Quick Start
 
-1. **Download**: Get the APK from [Releases](https://github.com/xororz/local-dream/releases) or [Google Play](https://play.google.com/store/apps/details?id=io.github.xororz.localdream)(NSFW filtered)
-2. **Install**: Install the APK on your Android device
-3. **Select Models**: Open the app and download the model(s) you want to use
+1. **Install**: Install the app on your Android device
+2. **Select Models**: Open the app and download the model(s) you want to use
 
 ## ✨ Features
 
 - 🎨 **txt2img** - Generate images from text descriptions
 - 🖼️ **img2img** - Transform existing images
 - 🎭 **inpaint** - Redraw selected areas of images
-- **custom models** - Import your own SD1.5 models for CPU (in app), SD1.5 and SDXL for NPU (follow [conversion guide](https://github.com/xororz/local-dream/tree/master/convert)). You can get some pre-converted models from [xororz/sd-qnn](https://huggingface.co/xororz/sd-qnn/tree/main) or [xororz/sdxl-qnn](https://huggingface.co/xororz/sdxl-qnn/tree/main) or [Mr-J-369](https://huggingface.co/Mr-J-369)
+- **custom models** - Import your own SD1.5 models for CPU (in app), SD1.5 and SDXL for NPU (follow the [conversion guide](./convert))
 - **lora support** - Support adding LoRA weights to custom CPU models when importing.
 - **prompt weights** - Emphasize certain words in prompts. E.g., `(masterpiece:1.5)`. Same format as [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
-- **embeddings** - Support for custom embeddings like [EasyNegative](https://civitai.com/models/7808/easynegative). SafeTensor format is required. Please convert `pt` to `safetensors` first.
-- **upscalers** - 4x upscaling with [realesrgan_x4plus_anime_6b](https://github.com/xinntao/Real-ESRGAN/) and [4x-UltraSharpV2_Lite](https://huggingface.co/Kim2091/UltraSharpV2)
+- **embeddings** - Support for custom embeddings in SafeTensor format. Please convert `pt` to `safetensors` first.
+- **upscalers** - 4x upscaling with realesrgan_x4plus_anime_6b and 4x-UltraSharpV2_Lite
 
 ## 🔧 Build Instructions
 
@@ -66,8 +65,8 @@ git clone --recursive https://github.com/xororz/local-dream.git
 
 ### 2. Prepare SDKs
 
-1. **Download QNN SDK**: Get QNN SDK 2.39 from the [Qualcomm AI Engine Direct SDK page](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk) and extract
-2. **Download Android NDK**: Get [Android NDK](https://developer.android.com/ndk/downloads) and extract
+1. **Prepare QNN SDK**: Obtain QNN SDK 2.39 from Qualcomm and extract it
+2. **Prepare Android NDK**: Obtain Android NDK from Google and extract it
 3. **Configure paths**:
    - Update `QNN_SDK_ROOT` in `app/src/main/cpp/CMakeLists.txt`
    - Update `ANDROID_NDK_ROOT` in `app/src/main/cpp/CMakePresets.json`
@@ -171,15 +170,15 @@ The following models are built-in and can be downloaded directly in the app:
 
 <div align="center">
 
-| Model                | Type  | CPU/GPU | NPU | Clip Skip | Source                                                                          |
-| -------------------- | ----- | :-----: | :-: | :-------: | ------------------------------------------------------------------------------- |
-| **SDXL Base 1.0**    | SDXL  |   ❌    | ✅  |     -     | [HuggingFace](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)  |
-| **Illustrious v16**  | SDXL  |   ❌    | ✅  |     -     | [CivitAI](https://civitai.com/models/827184/wai-illustrious-sdxl)               |
-| **AnythingV5**       | SD1.5 |   ✅    | ✅  |     2     | [CivitAI](https://civitai.com/models/9409?modelVersionId=30163)                 |
-| **ChilloutMix**      | SD1.5 |   ✅    | ✅  |     1     | [CivitAI](https://civitai.com/models/6424/chilloutmix?modelVersionId=11732)     |
-| **Absolute Reality** | SD1.5 |   ✅    | ✅  |     2     | [CivitAI](https://civitai.com/models/81458?modelVersionId=132760)               |
-| **QteaMix**          | SD1.5 |   ✅    | ✅  |     2     | [CivitAI](https://civitai.com/models/50696/qteamix-q?modelVersionId=94654)      |
-| **CuteYukiMix**      | SD1.5 |   ✅    | ✅  |     2     | [CivitAI](https://civitai.com/models/28169?modelVersionId=265102)               |
+| Model                | Type  | CPU/GPU | NPU | Clip Skip |
+| -------------------- | ----- | :-----: | :-: | :-------: |
+| **SDXL Base 1.0**    | SDXL  |   ❌    | ✅  |     -     |
+| **Illustrious v16**  | SDXL  |   ❌    | ✅  |     -     |
+| **AnythingV5**       | SD1.5 |   ✅    | ✅  |     2     |
+| **ChilloutMix**      | SD1.5 |   ✅    | ✅  |     1     |
+| **Absolute Reality** | SD1.5 |   ✅    | ✅  |     2     |
+| **QteaMix**          | SD1.5 |   ✅    | ✅  |     2     |
+| **CuteYukiMix**      | SD1.5 |   ✅    | ✅  |     2     |
 
 </div>
 
@@ -195,7 +194,7 @@ Custom seed support for reproducible image generation:
 
 ### C++ Libraries
 
-- **[Qualcomm QNN SDK](https://www.qualcomm.com/developer/software/neural-processing-sdk-for-ai)** - NPU model execution
+- **Qualcomm QNN SDK** - NPU model execution
 - **[alibaba/MNN](https://github.com/alibaba/MNN/)** - CPU model execution
 - **[xtensor-stack](https://github.com/xtensor-stack)** - Tensor operations & scheduling
 - **[mlc-ai/tokenizers-cpp](https://github.com/mlc-ai/tokenizers-cpp)** - Text tokenization
@@ -215,7 +214,7 @@ Custom seed support for reproducible image generation:
 
 - **[CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion)** and all other model creators
 - **[xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)** - Image upscaling
-- **[Kim2091/UltraSharpV2](https://huggingface.co/Kim2091/UltraSharpV2)** - Image upscaling
+- **Kim2091/UltraSharpV2** - Image upscaling
 - **[bhky/opennsfw2](https://github.com/bhky/opennsfw2)** - NSFW content filtering
 
 ---

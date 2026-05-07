@@ -10,7 +10,7 @@ The conversion scripts will be made available shortly. Please check back later o
 
 ## Prerequisites
 
-- QNN SDK 2.28 - Get from the [Qualcomm AI Engine Direct SDK page](https://www.qualcomm.com/developer/software/qualcomm-ai-engine-direct-sdk). **Please use v2.28 to avoid potential issues.**
+- QNN SDK 2.28 - Obtain from Qualcomm. **Please use v2.28 to avoid potential issues.**
 - [uv](https://github.com/astral-sh/uv) - Python environment manager
 - Enough RAM+swap(~64GB) for large-resolution conversion
 
