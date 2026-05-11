@@ -158,6 +158,7 @@ import io.github.xororz.localdream.data.ModelRepository
 import io.github.xororz.localdream.data.PatchScanner
 import io.github.xororz.localdream.data.Resolution
 import io.github.xororz.localdream.data.TagAutocompleteRepository
+import io.github.xororz.localdream.data.TagMatchType
 import io.github.xororz.localdream.data.TagSuggestion
 import io.github.xororz.localdream.data.UpscalerModel
 import io.github.xororz.localdream.data.UpscalerRepository
@@ -432,7 +433,7 @@ fun ModelRunScreen(
     val preferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val useImg2img = preferences.getBoolean("use_img2img", true)
     val enableTagAutocomplete = preferences.getBoolean("enable_tag_autocomplete", true)
-    val tagSuggestionCount = 16
+    val tagSuggestionCount = 100
     val tagAutocompleteRepository = remember { TagAutocompleteRepository.getInstance(context) }
     val tagDictState by tagAutocompleteRepository.state.collectAsState()
     val tagAutocompleteAvailable = enableTagAutocomplete && tagDictState.mainImported
@@ -441,6 +442,26 @@ fun ModelRunScreen(
         if (tagAutocompleteAvailable) {
             tagAutocompleteRepository.warmUp()
         }
+    }
+
+    // Names of imported textual-inversion embeddings (filename stems). Refreshed
+    // when either prompt field gains focus so newly-imported embeddings show up
+    // without re-entering the screen.
+    var embeddingNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(isPromptFocused, isNegativePromptFocused) {
+        if (!isPromptFocused && !isNegativePromptFocused) return@LaunchedEffect
+        val names = withContext(Dispatchers.IO) {
+            File(context.filesDir, "embeddings")
+                .takeIf { it.isDirectory }
+                ?.listFiles()
+                ?.asSequence()
+                ?.filter { it.isFile && it.extension.equals("safetensors", ignoreCase = true) }
+                ?.map { it.nameWithoutExtension }
+                ?.sortedBy { it.lowercase() }
+                ?.toList()
+                .orEmpty()
+        }
+        embeddingNames = names
     }
 
     var showCropScreen by remember { mutableStateOf(false) }
@@ -525,6 +546,36 @@ fun ModelRunScreen(
         negativePromptTokenMax = result.maxLength
     }
 
+    // Build embedding TagSuggestion rows for the current query. Returns at most
+    // `limit` entries: prefix matches first, then contains matches. Comparison
+    // normalizes spaces/dashes to underscores so users typing either form match.
+    fun embeddingSuggestionsFor(query: String, limit: Int = 5): List<TagSuggestion> {
+        if (embeddingNames.isEmpty()) return emptyList()
+        val q = query.trim()
+            .lowercase()
+            .replace(' ', '_')
+            .replace('-', '_')
+        if (q.isEmpty()) return emptyList()
+        val prefix = mutableListOf<TagSuggestion>()
+        val contains = mutableListOf<TagSuggestion>()
+        for (name in embeddingNames) {
+            val normalized = name.lowercase().replace(' ', '_').replace('-', '_')
+            val idx = normalized.indexOf(q)
+            if (idx < 0) continue
+            val suggestion = TagSuggestion(
+                replacementTag = name,
+                primaryText = name,
+                secondaryText = null,
+                matchType = TagMatchType.Embedding,
+                category = 0,
+                postCount = 0,
+                score = 0
+            )
+            if (idx == 0) prefix += suggestion else contains += suggestion
+        }
+        return (prefix + contains).take(limit)
+    }
+
     fun updatePromptField(value: TextFieldValue) {
         val textChanged = value.text != promptFieldValue.text
         val selectionChanged = value.selection != promptFieldValue.selection
@@ -551,9 +602,12 @@ fun ModelRunScreen(
         promptActiveQuery = activeTag.token
         promptSuggestJob?.cancel()
         promptSuggestJob = scope.launch {
-            delay(80)
+            delay(200)
+            val embeddings = embeddingSuggestionsFor(activeTag.token)
             val results = tagAutocompleteRepository.suggest(activeTag.token, tagSuggestionCount)
-            promptSuggestions = results
+            // Embeddings always pinned to the top; their relevance is local to
+            // this user, so they outrank dictionary suggestions by construction.
+            promptSuggestions = embeddings + results
         }
     }
 
@@ -583,9 +637,10 @@ fun ModelRunScreen(
         negativePromptActiveQuery = activeTag.token
         negativePromptSuggestJob?.cancel()
         negativePromptSuggestJob = scope.launch {
-            delay(80)
+            delay(200)
+            val embeddings = embeddingSuggestionsFor(activeTag.token)
             val results = tagAutocompleteRepository.suggest(activeTag.token, tagSuggestionCount)
-            negativePromptSuggestions = results
+            negativePromptSuggestions = embeddings + results
         }
     }
 
