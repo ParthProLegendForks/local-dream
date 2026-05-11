@@ -150,6 +150,26 @@
     <string name="basic_denoise">ノイズ除去強度: %.2f</string>
     <string name="basic_time">時間: %s</string>
     <string name="opencl_warning">GPUランタイムに関する警告：各解像度での最初の実行はキャッシュファイルを生成するため、処理速度が遅くなります。その後の実行は大幅に高速化されます。</string>
+
+    <!-- パラメータ共有 -->
+    <string name="share">共有</string>
+    <string name="share_params_title">パラメータを共有</string>
+    <string name="share_params_hint">共有する項目を選択してください。JSON としてクリップボードに書き込まれ、任意の方法で送信できます。</string>
+    <string name="share_use_base64">Base64 エンコード</string>
+    <string name="share_use_base64_hint">Base64 でエンコードします。</string>
+    <string name="share_copy_to_clipboard">コピー</string>
+    <string name="share_copied">パラメータをクリップボードにコピーしました</string>
+    <string name="share_field_steps">ステップ数</string>
+    <string name="share_field_cfg">CFG</string>
+    <string name="share_field_seed">シード</string>
+    <string name="share_field_denoise">ノイズ除去強度</string>
+    <string name="share_field_mode">モード</string>
+    <string name="import_params_title">共有されたパラメータを適用</string>
+    <string name="import_params_hint">クリップボードから共有パラメータを検出しました。適用する項目を選択してください。</string>
+    <string name="import_clear_clipboard">適用後にクリップボードをクリア</string>
+    <string name="import_clear_clipboard_hint">適用が完了したら、クリップボードから共有内容を削除します。</string>
+    <string name="import_apply">適用</string>
+    <string name="import_applied">パラメータを適用しました</string>
     <string name="error_device_not_supported">お使いのデバイスはまだサポートされていません。CPUバージョンを使用してください。</string>
     <string name="error_download_failed">ダウンロード失敗: %s</string>
     <string name="error_request_failed">リクエスト失敗: %s</string>

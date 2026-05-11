@@ -2,6 +2,8 @@ package io.github.xororz.localdream.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -87,6 +89,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -166,8 +169,13 @@ import io.github.xororz.localdream.service.BackendService
 import io.github.xororz.localdream.service.BackgroundGenerationService
 import io.github.xororz.localdream.service.BackgroundGenerationService.GenerationState
 import io.github.xororz.localdream.service.ModelDownloadService
+import io.github.xororz.localdream.ui.components.ImportParametersDialog
 import io.github.xororz.localdream.ui.components.PromptTagTextField
+import io.github.xororz.localdream.ui.components.ShareParametersDialog
+import io.github.xororz.localdream.utils.ImportedParams
 import io.github.xororz.localdream.utils.LogCapture
+import io.github.xororz.localdream.utils.ParamShare
+import io.github.xororz.localdream.utils.ParamShareField
 import io.github.xororz.localdream.utils.performUpscale
 import io.github.xororz.localdream.utils.reportImage
 import io.github.xororz.localdream.utils.saveImage
@@ -362,6 +370,16 @@ fun ModelRunScreen(
     var showDeleteHistoryDialog by remember { mutableStateOf(false) }
     var showSeedConfirmDialog by remember { mutableStateOf(false) }
     var pendingReproduceParams by remember { mutableStateOf<GenerationParameters?>(null) }
+
+    // Parameter share state
+    var shareSourceParams by remember { mutableStateOf<GenerationParameters?>(null) }
+    var pendingImport by remember { mutableStateOf<ImportedParams?>(null) }
+    var clipboardImportChecked by remember { mutableStateOf(false) }
+    val shareUseBase64 by remember { generationPreferences.observeShareUseBase64() }
+        .collectAsState(initial = true)
+    val shareClearClipboardOnImport by remember {
+        generationPreferences.observeShareClearClipboardOnImport()
+    }.collectAsState(initial = true)
 
     // Selection mode state
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -1486,7 +1504,44 @@ fun ModelRunScreen(
                                     onDismissRequest = {
                                         showAdvancedSettings = false
                                     },
-                                    title = { Text(stringResource(R.string.advanced_settings_title)) },
+                                    title = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.advanced_settings_title),
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            IconButton(onClick = {
+                                                val currentMode = when {
+                                                    isInpaintMode -> GenerationMode.INPAINT
+                                                    selectedImageUri != null -> GenerationMode.IMG2IMG
+                                                    else -> GenerationMode.TXT2IMG
+                                                }
+                                                shareSourceParams = GenerationParameters(
+                                                    steps = steps.toInt(),
+                                                    cfg = cfg,
+                                                    seed = seed.toLongOrNull(),
+                                                    prompt = prompt,
+                                                    negativePrompt = negativePrompt,
+                                                    generationTime = null,
+                                                    width = currentWidth,
+                                                    height = currentHeight,
+                                                    runOnCpu = model?.runOnCpu ?: false,
+                                                    denoiseStrength = denoiseStrength,
+                                                    useOpenCL = useOpenCL,
+                                                    scheduler = scheduler,
+                                                    mode = currentMode,
+                                                )
+                                            }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Share,
+                                                    contentDescription = stringResource(R.string.share)
+                                                )
+                                            }
+                                        }
+                                    },
                                     text = {
                                         Column(
                                             verticalArrangement = Arrangement.spacedBy(
@@ -2639,7 +2694,25 @@ fun ModelRunScreen(
             if (showParametersDialog && generationParams != null) {
                 AlertDialog(
                     onDismissRequest = { showParametersDialog = false },
-                    title = { Text(stringResource(R.string.params_detail)) },
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.params_detail),
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = {
+                                shareSourceParams = generationParams
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = stringResource(R.string.share)
+                                )
+                            }
+                        }
+                    },
                     text = {
                         Column(
                             modifier = Modifier
@@ -3796,7 +3869,25 @@ fun ModelRunScreen(
         if (params != null) {
             AlertDialog(
                 onDismissRequest = { showHistoryParametersDialog = false },
-                title = { Text(stringResource(R.string.generation_params_title)) },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(R.string.generation_params_title),
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = {
+                            shareSourceParams = params
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(R.string.share)
+                            )
+                        }
+                    }
+                },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -4130,6 +4221,152 @@ fun ModelRunScreen(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+
+    // Detect shared params on the clipboard once the model is ready.
+    LaunchedEffect(backendState, hasInitialized) {
+        if (!clipboardImportChecked
+            && hasInitialized
+            && backendState is BackendService.BackendState.Running
+        ) {
+            clipboardImportChecked = true
+            val clipboard =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val raw = clipboard?.primaryClip
+                ?.takeIf { it.itemCount > 0 }
+                ?.getItemAt(0)
+                ?.coerceToText(context)
+                ?.toString()
+            ParamShare.tryDecode(raw)?.let { pendingImport = it }
+        }
+    }
+
+    // Share parameters dialog
+    shareSourceParams?.let { source ->
+        val available = remember(source) {
+            val list = mutableListOf<ParamShareField>()
+            list += ParamShareField.PROMPT
+            list += ParamShareField.NEGATIVE_PROMPT
+            list += ParamShareField.STEPS
+            list += ParamShareField.CFG
+            if (source.seed != null) list += ParamShareField.SEED
+            list += ParamShareField.SCHEDULER
+            if (source.mode != GenerationMode.UNKNOWN
+                && source.mode != GenerationMode.TXT2IMG
+            ) {
+                list += ParamShareField.DENOISE_STRENGTH
+            }
+            list
+        }
+        ShareParametersDialog(
+            availableFields = available,
+            fieldPreview = { field ->
+                when (field) {
+                    ParamShareField.PROMPT -> source.prompt
+                    ParamShareField.NEGATIVE_PROMPT -> source.negativePrompt
+                    ParamShareField.STEPS -> source.steps.toString()
+                    ParamShareField.CFG -> "%.1f".format(source.cfg)
+                    ParamShareField.SEED -> source.seed?.toString()
+                    ParamShareField.SCHEDULER -> when (source.scheduler) {
+                        "dpm" -> "DPM++ 2M"
+                        "euler_a" -> "Euler A"
+                        "lcm" -> "LCM"
+                        else -> source.scheduler
+                    }
+
+                    ParamShareField.DENOISE_STRENGTH ->
+                        "%.2f".format(source.denoiseStrength)
+
+                    ParamShareField.MODE -> source.mode.name.lowercase()
+                }
+            },
+            useBase64Initial = shareUseBase64,
+            onUseBase64Changed = { value ->
+                scope.launch { generationPreferences.setShareUseBase64(value) }
+            },
+            onConfirm = { selectedFields, useBase64 ->
+                val json = ParamShare.buildJson(source, selectedFields)
+                val payload = ParamShare.encodeForClipboard(json, useBase64)
+                val clipboard =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                clipboard?.setPrimaryClip(
+                    ClipData.newPlainText("Local Dream params", payload)
+                )
+                clipboardImportChecked = true
+                shareSourceParams = null
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.share_copied),
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onDismiss = { shareSourceParams = null }
+        )
+    }
+
+    // Import shared parameters dialog
+    pendingImport?.let { imported ->
+        ImportParametersDialog(
+            imported = imported,
+            clearClipboardInitial = shareClearClipboardOnImport,
+            onClearClipboardChanged = { value ->
+                scope.launch {
+                    generationPreferences.setShareClearClipboardOnImport(value)
+                }
+            },
+            onApply = { selectedFields, clearClipboard ->
+                if (ParamShareField.PROMPT in selectedFields) {
+                    imported.prompt?.let {
+                        prompt = it
+                        promptFieldValue = TextFieldValue(it, TextRange(it.length))
+                        promptSuggestions = emptyList()
+                    }
+                }
+                if (ParamShareField.NEGATIVE_PROMPT in selectedFields) {
+                    imported.negativePrompt?.let {
+                        negativePrompt = it
+                        negativePromptFieldValue =
+                            TextFieldValue(it, TextRange(it.length))
+                        negativePromptSuggestions = emptyList()
+                    }
+                }
+                if (ParamShareField.STEPS in selectedFields) {
+                    imported.steps?.let { steps = it.toFloat() }
+                }
+                if (ParamShareField.CFG in selectedFields) {
+                    imported.cfg?.let { cfg = it }
+                }
+                if (ParamShareField.SEED in selectedFields) {
+                    seed = imported.seed?.toString() ?: ""
+                }
+                if (ParamShareField.SCHEDULER in selectedFields) {
+                    imported.scheduler?.let { scheduler = it }
+                }
+                if (ParamShareField.DENOISE_STRENGTH in selectedFields) {
+                    imported.denoiseStrength?.let { denoiseStrength = it }
+                }
+                saveAllFields()
+                if (clearClipboard) {
+                    val clipboard =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE)
+                                as? ClipboardManager
+                    runCatching {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            clipboard?.clearPrimaryClip()
+                        } else {
+                            clipboard?.setPrimaryClip(ClipData.newPlainText("", ""))
+                        }
+                    }
+                }
+                pendingImport = null
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.import_applied),
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onDismiss = { pendingImport = null }
         )
     }
 }

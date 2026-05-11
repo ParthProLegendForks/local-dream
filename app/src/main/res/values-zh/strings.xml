@@ -167,6 +167,26 @@
     <string name="basic_time">耗时: %s</string>
     <string name="opencl_warning">GPU运行时警告：每个分辨率的首次运行会比较慢，这会生成缓存文件。后续运行会快一些。</string>
 
+    <!-- 参数分享 -->
+    <string name="share">分享</string>
+    <string name="share_params_title">分享参数</string>
+    <string name="share_params_hint">勾选要分享的字段，将以 JSON 形式写入剪贴板，便于通过任意方式发送。</string>
+    <string name="share_use_base64">Base64 编码</string>
+    <string name="share_use_base64_hint">使用 Base64 编码。</string>
+    <string name="share_copy_to_clipboard">复制</string>
+    <string name="share_copied">参数已复制到剪贴板</string>
+    <string name="share_field_steps">步数</string>
+    <string name="share_field_cfg">CFG</string>
+    <string name="share_field_seed">种子</string>
+    <string name="share_field_denoise">降噪强度</string>
+    <string name="share_field_mode">模式</string>
+    <string name="import_params_title">应用分享的参数</string>
+    <string name="import_params_hint">在剪贴板中检测到分享的参数，请选择要应用的字段。</string>
+    <string name="import_clear_clipboard">应用后清除剪贴板</string>
+    <string name="import_clear_clipboard_hint">应用完成后从剪贴板中清除分享内容。</string>
+    <string name="import_apply">应用</string>
+    <string name="import_applied">参数已应用</string>
+
     <!-- Error Messages -->
     <string name="error_device_not_supported">您的设备暂不支持，请使用CPU版本</string>
     <string name="error_download_failed">下载失败: %s</string>

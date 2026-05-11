@@ -167,6 +167,26 @@
     <string name="basic_time">Time: %s</string>
     <string name="opencl_warning">GPU runtime warning: The first run at each resolution will be slow as it generates cache files. Subsequent runs will be much faster.</string>
 
+    <!-- Parameter Share -->
+    <string name="share">Share</string>
+    <string name="share_params_title">Share Parameters</string>
+    <string name="share_params_hint">Pick the fields to copy. The result is written to the clipboard so you can paste it anywhere.</string>
+    <string name="share_use_base64">Base64 encoding</string>
+    <string name="share_use_base64_hint">Encode the payload with Base64.</string>
+    <string name="share_copy_to_clipboard">Copy</string>
+    <string name="share_copied">Parameters copied to clipboard</string>
+    <string name="share_field_steps">Steps</string>
+    <string name="share_field_cfg">CFG</string>
+    <string name="share_field_seed">Seed</string>
+    <string name="share_field_denoise">Denoise strength</string>
+    <string name="share_field_mode">Mode</string>
+    <string name="import_params_title">Apply Shared Parameters</string>
+    <string name="import_params_hint">Shared parameters were found on the clipboard. Choose which fields to apply.</string>
+    <string name="import_clear_clipboard">Clear clipboard after apply</string>
+    <string name="import_clear_clipboard_hint">Remove the shared payload from the clipboard once parameters are applied.</string>
+    <string name="import_apply">Apply</string>
+    <string name="import_applied">Parameters applied</string>
+
     <!-- Error Messages -->
     <string name="error_device_not_supported">Your device is not supported yet, please use CPU version</string>
     <string name="error_download_failed">Download failed: %s</string>
