@@ -136,6 +136,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -343,6 +344,12 @@ fun ModelRunScreen(
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
 
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showOpenCLWarningDialog by remember { mutableStateOf(false) }
 
@@ -385,6 +392,11 @@ fun ModelRunScreen(
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedItems = remember { mutableStateListOf<HistoryItem>() }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
+    var showBatchSaveDialog by remember { mutableStateOf(false) }
+    var isBatchSaving by remember { mutableStateOf(false) }
+    var batchSaveTotal by remember { mutableStateOf(0) }
+    var batchSaveCurrent by remember { mutableStateOf(0) }
+    var batchSaveFailed by remember { mutableStateOf(0) }
 
     var generationParamsTmp by remember {
         mutableStateOf(
@@ -2880,7 +2892,7 @@ fun ModelRunScreen(
     fun HistoryPage() {
         // History page
         // Handle back button in selection mode
-        BackHandler(enabled = isSelectionMode) {
+        BackHandler(enabled = isSelectionMode && !isBatchSaving) {
             isSelectionMode = false
             selectedItems.clear()
         }
@@ -3097,7 +3109,8 @@ fun ModelRunScreen(
                                 onClick = {
                                     isSelectionMode = false
                                     selectedItems.clear()
-                                }
+                                },
+                                enabled = !isBatchSaving
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -3114,15 +3127,14 @@ fun ModelRunScreen(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                            Row {
                                 // Select all / Deselect all button
                                 val visibleCount = historyItems.size
                                 val visibleItems = historyItems
                                 val isAllSelected =
                                     selectedItems.size == visibleCount && visibleItems.all { it in selectedItems }
                                 IconButton(
+                                    modifier = Modifier.size(40.dp),
                                     onClick = {
                                         if (isAllSelected) {
                                             selectedItems.clear()
@@ -3131,7 +3143,8 @@ fun ModelRunScreen(
                                             selectedItems.clear()
                                             selectedItems.addAll(visibleItems)
                                         }
-                                    }
+                                    },
+                                    enabled = !isBatchSaving
                                 ) {
                                     Icon(
                                         imageVector = if (isAllSelected)
@@ -3143,15 +3156,34 @@ fun ModelRunScreen(
                                     )
                                 }
 
+                                // Save button
+                                IconButton(
+                                    modifier = Modifier.size(40.dp),
+                                    onClick = { showBatchSaveDialog = true },
+                                    enabled = selectedItems.isNotEmpty() && !isBatchSaving
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Save,
+                                        contentDescription = "Save selected",
+                                        tint = if (selectedItems.isNotEmpty() && !isBatchSaving)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurface.copy(
+                                                alpha = 0.38f
+                                            )
+                                    )
+                                }
+
                                 // Delete button
                                 IconButton(
+                                    modifier = Modifier.size(40.dp),
                                     onClick = { showBatchDeleteDialog = true },
-                                    enabled = selectedItems.isNotEmpty()
+                                    enabled = selectedItems.isNotEmpty() && !isBatchSaving
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = "Delete selected",
-                                        tint = if (selectedItems.isNotEmpty())
+                                        tint = if (selectedItems.isNotEmpty() && !isBatchSaving)
                                             MaterialTheme.colorScheme.error
                                         else
                                             MaterialTheme.colorScheme.onSurface.copy(
@@ -4161,6 +4193,117 @@ fun ModelRunScreen(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+
+    // Batch save confirmation dialog
+    if (showBatchSaveDialog && selectedItems.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showBatchSaveDialog = false },
+            title = { Text(stringResource(R.string.batch_save)) },
+            text = {
+                Text(stringResource(R.string.batch_save_confirm, selectedItems.size))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val items = selectedItems.toList()
+                        showBatchSaveDialog = false
+                        if (items.isEmpty()) return@TextButton
+                        batchSaveTotal = items.size
+                        batchSaveCurrent = 0
+                        batchSaveFailed = 0
+                        isBatchSaving = true
+                        scope.launch(Dispatchers.IO) {
+                            items.forEach { item ->
+                                var success = false
+                                try {
+                                    val bmp = BitmapFactory.decodeFile(
+                                        item.imageFile.absolutePath
+                                    )
+                                    if (bmp != null) {
+                                        saveImage(
+                                            context = context,
+                                            bitmap = bmp,
+                                            onSuccess = { success = true },
+                                            onError = { }
+                                        )
+                                    }
+                                } catch (_: Exception) {
+                                    // counted as failure
+                                }
+                                withContext(Dispatchers.Main) {
+                                    batchSaveCurrent += 1
+                                    if (!success) batchSaveFailed += 1
+                                }
+                            }
+                            withContext(Dispatchers.Main) {
+                                val total = batchSaveTotal
+                                val failed = batchSaveFailed
+                                val saved = total - failed
+                                val message = if (failed == 0) {
+                                    context.getString(R.string.saved_count, saved)
+                                } else {
+                                    context.getString(
+                                        R.string.saved_count_with_failed,
+                                        saved,
+                                        failed
+                                    )
+                                }
+                                Toast.makeText(
+                                    context,
+                                    message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                isBatchSaving = false
+                                selectedItems.clear()
+                                isSelectionMode = false
+                            }
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBatchSaveDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // Batch save progress dialog (modal — blocks other interactions)
+    if (isBatchSaving) {
+        AlertDialog(
+            onDismissRequest = { /* not dismissable */ },
+            properties = androidx.compose.ui.window.DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            ),
+            title = { Text(stringResource(R.string.batch_save)) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.batch_saving_progress,
+                            batchSaveCurrent,
+                            batchSaveTotal
+                        ),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    val saveProgress = if (batchSaveTotal > 0)
+                        batchSaveCurrent.toFloat() / batchSaveTotal else 0f
+                    LinearProgressIndicator(
+                        progress = saveProgress,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {}
         )
     }
 

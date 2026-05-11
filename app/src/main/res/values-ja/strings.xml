@@ -122,6 +122,11 @@
     <string name="delete_failed_message">削除に失敗</string>
     <string name="batch_delete">一括削除</string>
     <string name="batch_delete_confirm">選択した画像 %d 枚を削除してもよろしいですか? この操作は元に戻せません。</string>
+    <string name="batch_save">一括保存</string>
+    <string name="batch_save_confirm">選択した画像 %d 枚をギャラリーに保存しますか?</string>
+    <string name="batch_saving_progress">%1$d / %2$d を保存中</string>
+    <string name="saved_count">%d 枚を保存しました</string>
+    <string name="saved_count_with_failed">%1$d 枚を保存、%2$d 枚失敗</string>
     <string name="deleted_count">%d 個のアイテムを削除しました</string>
     <string name="deleted_count_with_failed">%1$d 個のアイテムを正常に削除しましたが、%2$d 個のアイテムは削除できませんでした</string>
     <string name="confirm_exit">閉じてよろしいですか？</string>
